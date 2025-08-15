@@ -27,14 +27,14 @@ public class JwtService {
         this.refreshTokenExpirationMs = jwtProperties.getRefreshTokenExpirationMs();
     }
 
-    private String buildToken(String subject, Map<String, String> claims, long expirationMs) {
+    private String buildToken(String subject, Map<String, ?> claims, long expirationMs) {
         long now = System.currentTimeMillis();
         return Jwts.builder().subject(subject).claims(claims).issuedAt(new Date(now))
                 .expiration(new Date(now + expirationMs))
                 .signWith(key).compact();
     }
 
-    public String generateAccessToken(String subject, Map<String, String> claims) {
+    public String generateAccessToken(String subject, Map<String, ?> claims) {
         return buildToken(subject, claims, accessTokenExpirationMs);
     }
 
@@ -47,14 +47,15 @@ public class JwtService {
     }
 
     public String getSubject(String token) {
-        return parser().parseUnsecuredClaims(token).getPayload().getSubject();
+        return parser().parseSignedClaims(token).getPayload().getSubject();
     }
 
     public boolean isValid(String token) {
         try {
-            parser().parseUnsecuredClaims(token);
+            parser().parseSignedClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
+            System.out.println("Token is invalid");
             return false;
         }
     }
