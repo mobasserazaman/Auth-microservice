@@ -28,4 +28,17 @@ public class AuthController {
         // string
         return ResponseEntity.ok(auth.refresh(refreshToken.replace("\"", "").trim()));
     }
+
+    @PostMapping("/request-reset")
+    public ResponseEntity<?> requestReset(@RequestParam String email) {
+        auth.requestPasswordReset(email);
+        return ResponseEntity.ok("Password reset link sent to email");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestBody String newPassword) {
+        auth.resetPassword(token, newPassword.replace("\"", "").trim());
+        return ResponseEntity.ok("Password reset successful");
+    }
+
 }
