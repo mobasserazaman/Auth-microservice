@@ -28,7 +28,6 @@ public class JwtService {
     }
 
     private String buildToken(String subject, Map<String, ?> claims, long expirationMs) {
-        long now = System.currentTimeMillis();
         return Jwts.builder().subject(subject).claims(claims).issuedAt(new Date(now))
                 .expiration(new Date(now + expirationMs))
                 .signWith(key).compact();
@@ -55,7 +54,6 @@ public class JwtService {
             parser().parseSignedClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
-            System.out.println("Token is invalid");
             return false;
         }
     }
