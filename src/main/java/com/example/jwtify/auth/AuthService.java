@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -12,8 +13,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.example.jwtify.mail.EmailService;
-import com.example.jwtify.mail.PasswordResetRedisService;
+import com.example.jwtify.email.EmailService;
+import com.example.jwtify.email.RedisService;
 import com.example.jwtify.security.JwtService;
 import com.example.jwtify.user.Role;
 import com.example.jwtify.user.User;
@@ -27,7 +28,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder encoder;
     private final AuthenticationManager authManager;
-    private final PasswordResetRedisService redisService;
+    private final RedisService redisService;
     private final EmailService emailService;
     private final JwtService jwt;
 
@@ -41,6 +42,7 @@ public class AuthService {
                 .build();
         System.out.println(user);
         userRepository.save(user);
+        requestVerification(req.getEmail());
     }
 
     public AuthResponse login(AuthRequest req) {
@@ -77,24 +79,39 @@ public class AuthService {
     public void requestPasswordReset(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
         String token = UUID.randomUUID().toString();
-        redisService.saveToken(token, email, 15);
+        redisService.save("password-reset:" + email, token, 15);
         emailService.sendPasswordResetEmail(email, token);
     }
 
-    public void resetPassword(String token, String newPassword) {
-        String email = redisService.getEmailByToken(token);
-        if (email == null)
+    public void resetPassword(String token, String email, String newPassword) {
+        String savedToken = redisService.retrieve("password-reset:" + email);
+        if (savedToken == null || !savedToken.equals(token)) {
             throw new RuntimeException("Invalid or expired token.");
+        }
 
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
         user.setPassword(encoder.encode(newPassword));
-        User savedUser = userRepository.save(user);
-        System.out.println("Password before encode: [" + newPassword + "]");
-        System.out.println("Length: " + newPassword.length());
-        System.out.println(encoder.matches(newPassword, savedUser.getPassword()));
-        System.out.println(savedUser.getPassword());
+        userRepository.save(user);
+        redisService.deleteKey("password-reset:" + email);
+    }
 
-        redisService.deleteToken(token);
+    public void requestVerification(String email) {
+        userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        String token = UUID.randomUUID().toString();
+        redisService.save("email-verification:" + email, token, 1440); // 24 hours
+        emailService.sendVerificationEmail(email, token);
+    }
+
+    public void verifyEmail(String token, String email) {
+        String savedToken = redisService.retrieve("email-verification:" + email);
+        if (savedToken == null || !savedToken.equals(token)) {
+            throw new RuntimeException("Invalid or expired token.");
+        }
+
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        user.setVerified(true);
+        userRepository.save(user);
+        redisService.deleteKey("email-verification:" + email);
     }
 
 }

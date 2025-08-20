@@ -1,4 +1,4 @@
-package com.example.jwtify.mail;
+package com.example.jwtify.email;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

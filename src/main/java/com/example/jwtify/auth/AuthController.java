@@ -3,6 +3,12 @@ package com.example.jwtify.auth;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -36,9 +42,23 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestBody String newPassword) {
-        auth.resetPassword(token, newPassword.replace("\"", "").trim());
+    public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String email, @RequestBody String newPassword) {
+        auth.resetPassword(token, email, newPassword.replace("\"", "").trim());
         return ResponseEntity.ok("Password reset successful");
     }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<?> resendVerification(@RequestParam String email) {
+        auth.requestVerification(email);
+        return ResponseEntity.ok("Verification link send to email");
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@RequestParam String token, @RequestParam String email) {
+        auth.verifyEmail(token, email);  
+        return ResponseEntity.ok("Verification successful");
+    }
+    
+    
 
 }
