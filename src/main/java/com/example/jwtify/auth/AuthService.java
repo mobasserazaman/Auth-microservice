@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -77,7 +76,7 @@ public class AuthService {
     }
 
     public void requestPasswordReset(String email) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
         String token = UUID.randomUUID().toString();
         redisService.save("password-reset:" + email, token, 15);
         emailService.sendPasswordResetEmail(email, token);

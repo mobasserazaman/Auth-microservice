@@ -17,5 +17,20 @@ services:
     ports:
       - 6379:6379
 
+  app:
+    image: mobasserazaman/jwtify:latest
+    container_name: jwtify-backend
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/jwtify-db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+    ports:
+      - 8080:8080
+
 volumes:
   pgdata:

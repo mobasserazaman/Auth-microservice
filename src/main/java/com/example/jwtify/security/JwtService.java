@@ -28,6 +28,7 @@ public class JwtService {
     }
 
     private String buildToken(String subject, Map<String, ?> claims, long expirationMs) {
+        long now = System.currentTimeMillis();
         return Jwts.builder().subject(subject).claims(claims).issuedAt(new Date(now))
                 .expiration(new Date(now + expirationMs))
                 .signWith(key).compact();
